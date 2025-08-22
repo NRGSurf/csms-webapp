@@ -32,9 +32,9 @@ export function PricingDisplay({ sessionData, onContinue }: PricingDisplayProps)
   };
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Station Information Card */}
-      <Card className="shadow-lg">
+      <Card className="bg-white rounded-2xl shadow-xl border-0">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -45,7 +45,7 @@ export function PricingDisplay({ sessionData, onContinue }: PricingDisplayProps)
           </div>
         </CardHeader>
         
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {/* Station Details */}
           <div className="space-y-3">
             <div className="flex items-start gap-3">
@@ -79,7 +79,7 @@ export function PricingDisplay({ sessionData, onContinue }: PricingDisplayProps)
       </Card>
 
       {/* Pricing Information Card */}
-      <Card className="shadow-lg">
+      <Card className="bg-white rounded-2xl shadow-xl border-0">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-xl">
             <Euro className="size-5 text-green-500" />
@@ -179,10 +179,10 @@ export function PricingDisplay({ sessionData, onContinue }: PricingDisplayProps)
           {/* AFIR Compliance Badge */}
           <div className="flex items-center justify-center gap-2">
             <Badge variant="outline" className="border-green-500 text-green-700">
-              🇪🇺 EU AFIR Compliant
+              <span className="inline-flex items-center gap-1"><span className="text-green-600">EU</span> AFIR Compliant</span>
             </Badge>
             <Badge variant="outline" className="border-blue-500 text-blue-700">
-              🔒 Secure Payment
+              <span className="inline-flex items-center gap-1"><span className="inline-block w-2.5 h-3 rounded-[2px] bg-blue-600" /> Secure Payment</span>
             </Badge>
           </div>
 
@@ -190,7 +190,7 @@ export function PricingDisplay({ sessionData, onContinue }: PricingDisplayProps)
           <Button 
             onClick={onContinue}
             size="lg"
-            className="w-full h-14 text-base"
+            className="bg-gray-900 hover:bg-gray-900/90 text-white rounded-xl w-full h-14 text-base"
           >
             Accept Pricing & Continue
           </Button>

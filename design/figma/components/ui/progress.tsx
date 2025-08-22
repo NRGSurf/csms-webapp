@@ -1,26 +1,38 @@
-import * as React from "react"
-import * as ProgressPrimitive from "@radix-ui/react-progress"
+import * as React from "react";
+import * as ProgressPrimitive from "@radix-ui/react-progress";
 
-import { cn } from "../../lib/utils"
+type Props = React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root> & {
+  value?: number;
+};
 
-const Progress = React.forwardRef<
+export const Progress = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>
->(({ className, value, ...props }, ref) => (
-  <ProgressPrimitive.Root
-    ref={ref}
-    className={cn(
-      "relative h-4 w-full overflow-hidden rounded-full bg-secondary",
-      className
-    )}
-    {...props}
-  >
-    <ProgressPrimitive.Indicator
-      className="h-full w-full flex-1 bg-primary transition-all"
-      style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
-    />
-  </ProgressPrimitive.Root>
-))
-Progress.displayName = ProgressPrimitive.Root.displayName
-
-export { Progress }
+  Props
+>(({ value = 0, ...props }, ref) => {
+  const clamped = Math.max(0, Math.min(100, value ?? 0));
+  return (
+    <ProgressPrimitive.Root
+      ref={ref}
+      data-orientation="horizontal"
+      style={{
+        position: "relative",
+        height: 8,
+        width: "100%",
+        overflow: "hidden",
+        borderRadius: 9999,
+        background: "var(--gray-5)",
+      }}
+      {...props}
+    >
+      <ProgressPrimitive.Indicator
+        style={{
+          height: "100%",
+          width: `${clamped}%`,
+          background: "var(--blue-9)",
+          transition: "width .3s ease",
+        }}
+      />
+    </ProgressPrimitive.Root>
+  );
+});
+Progress.displayName = "Progress";

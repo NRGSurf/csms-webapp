@@ -1,57 +1,69 @@
 import React from "react";
+import { Box, Flex, Text } from "@radix-ui/themes";
 import { CheckCircle2 } from "lucide-react";
 
-type Props = {
-  labels: string[];
-  currentIndex: number; // 0-based
-  className?: string;
-};
+type Props = { labels: string[]; currentIndex: number; className?: string };
 
-/**
- * Figma-inspired stepper header with numbered dots and a progress bar.
- * Pure Tailwind + lucide-react. No MUI dependency.
- */
-export default function FigmaStepper({
-  labels,
-  currentIndex,
-  className,
-}: Props) {
+export default function FigmaStepper({ labels, currentIndex }: Props) {
   const total = Math.max(labels.length, 1);
   const pct = Math.min(100, Math.max(0, ((currentIndex + 1) / total) * 100));
 
   return (
-    <div className={className ?? ""}>
-      <div className="flex justify-between items-center mb-2">
+    <Box>
+      <Flex justify="between" align="center" mb="1">
         {labels.map((label, index) => {
           const isActive = index === currentIndex;
           const isCompleted = index < currentIndex;
-          const circle = isCompleted
-            ? "bg-green-500 text-white"
+          const bg = isCompleted
+            ? "var(--green-9)"
             : isActive
-            ? "bg-blue-500 text-white"
-            : "bg-gray-200 text-gray-600";
-
+            ? "var(--blue-9)"
+            : "var(--gray-5)";
+          const color = isCompleted || isActive ? "white" : "var(--gray-11)";
           return (
-            <div key={label} className="flex flex-col items-center">
-              <div
-                className={[
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
-                  circle,
-                ].join(" ")}
+            <Flex key={label} direction="column" align="center" gap="1">
+              <Box
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 9999,
+                  background: bg,
+                  color,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
               >
-                {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : index + 1}
-              </div>
-              <span className="text-xs mt-1 text-gray-600">{label}</span>
-            </div>
+                {isCompleted ? <CheckCircle2 size={16} /> : index + 1}
+              </Box>
+              <Text size="1" color="gray">
+                {label}
+              </Text>
+            </Flex>
           );
         })}
-      </div>
-      <div className="w-full bg-gray-200 rounded-full h-2">
-        <div
-          className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-          style={{ width: `${pct}%` }}
+      </Flex>
+      <Box
+        style={{
+          width: "100%",
+          height: 8,
+          borderRadius: 9999,
+          background: "var(--gray-5)",
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          style={{
+            height: "100%",
+            width: `${pct}%`,
+            background: "var(--blue-9)",
+            borderRadius: 9999,
+            transition: "width .3s ease",
+          }}
         />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

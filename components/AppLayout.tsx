@@ -1,11 +1,16 @@
 import { ReactNode } from "react";
+import { Theme, Container } from "@radix-ui/themes";
+// IMPORTANT: ensure global styles are imported in pages/_app.tsx :
+// import "@radix-ui/themes/styles.css";
 
 type Props = { children: ReactNode };
 
 export default function AppLayout({ children }: Props) {
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <main>{children}</main>
-    </div>
+    <Theme appearance="light" radius="large">
+      <Container size="3" px="3" py="5">
+        {children}
+      </Container>
+    </Theme>
   );
 }

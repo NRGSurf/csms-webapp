@@ -2,21 +2,19 @@ import React, { useMemo, useState } from "react";
 import {
   Alert,
   Box,
-  Card,
-  CardActions,
-  CardContent,
   CircularProgress,
-  Divider,
   Button,
   Typography,
 } from "@mui/material";
 import FigmaStepper from "./figma-adapted/FigmaStepper";
+import PaymentAuthorized from "./figma-adapted/PaymentAuthorized";
+import AppIcon from "../design/figma/imports/AppIcon2";
 
 import Overview from "./flow/Overview";
 import BillingForm from "./flow/BillingForm";
 import PaymentPanel from "./flow/PaymentPanel";
 import Done from "./flow/Done";
-import ChargingProgress from "./flow/ChargingProgress";
+import ChargingProgress from "./flow/Charging";
 
 import { FlowStep, InvoiceForm } from "./flow/types";
 import { useStation } from "../hooks/useStation";
@@ -85,6 +83,7 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
 
   // Payment
   const [clientToken, setClientToken] = useState<string | null>(null);
+  const [paymentAuthorized, setPaymentAuthorized] = useState(false);
 
   const go = (next: FlowStep) => setStep(next);
   const reset = () => {
@@ -182,20 +181,35 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
   // Loading card for station info
   if (stationLoading) {
     return (
-      <Card className="max-w-xl mx-auto shadow-lg">
-        <CardContent className="flex gap-3 items-center">
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        {/* Figma Header */}
+        <div className="text-center mb-6">
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-16 h-16">
+              <AppIcon />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            NRG Charge Portal
+          </h1>
+          <p className="text-gray-600">
+            AFIR Compliant • Secure • No Registration Required
+          </p>
+        </div>
+
+        <div className="flex gap-3 items-center">
           <CircularProgress size={18} />
           <Typography>Loading station…</Typography>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
-  const steps = ["Pricing", "Details", "Payment", "Charging"];
+  const steps = ["Pricing", "Billing", "Payment", "Receipt"];
   const showError = error || stationError;
 
   return (
-    <Card className="max-w-3xl mx-auto shadow-lg">
+    <div className="max-w-3xl mx-auto shadow-lg">
       {/* Header + progress (at the top, like the mock) */}
       <Box sx={{ p: 3, pb: 0 }}>
         <Typography variant="h4" fontWeight={700} textAlign="center">
@@ -213,7 +227,7 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
         <FigmaStepper labels={steps} currentIndex={step} className="mt-2" />
       </Box>
 
-      <CardContent sx={{ pt: 2 }}>
+      <div sx={{ pt: 2 }}>
         {showError && (
           <Alert severity="error" className="mb-4">
             {showError}
@@ -263,40 +277,29 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
         )}
 
         {/* PAYMENT */}
-        {step === FlowStep.Payment && (
-          <PaymentPanel
-            clientToken={clientToken}
-            busy={busy}
-            onPay={handlePay}
-          />
-        )}
+        {step === FlowStep.Payment &&
+          (paymentAuthorized ? (
+            <PaymentAuthorized
+              amount={60}
+              email={invoice.email}
+              onContinue={() => setStep(FlowStep.Overview)}
+            />
+          ) : (
+            <PaymentPanel
+              clientToken={clientToken}
+              busy={busy}
+              onPay={async (n) => {
+                await handlePay(n);
+                setPaymentAuthorized(true);
+              }}
+            />
+          ))}
 
         {/* DONE */}
         {step === FlowStep.Done && <Done />}
-      </CardContent>
+      </div>
 
       {/* Bottom actions (keep minimal) */}
-      <Divider />
-      <CardActions>
-        <Box className="w-full flex justify-between items-center">
-          <Box className="flex gap-1">
-            {step > FlowStep.Overview && step < FlowStep.Done && (
-              <Button
-                onClick={() => setStep((step - 1) as FlowStep)}
-                disabled={busy}
-              >
-                Back
-              </Button>
-            )}
-            {step !== FlowStep.Done && (
-              <Button onClick={reset} disabled={busy}>
-                Cancel
-              </Button>
-            )}
-          </Box>
-          <Box />
-        </Box>
-      </CardActions>
-    </Card>
+    </div>
   );
 }
