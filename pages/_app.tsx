@@ -1,17 +1,7 @@
 import type { AppProps } from "next/app";
-import "@/styles/tokens.css";
-import "@/styles/globals.css";
-
-import { ThemeProvider, CssBaseline } from "@mui/material";
-import theme from "@/theme/nrg-theme";
+import "@/styles/tokens.css"; // generated from tokens.json (next step)
+import "@/styles/globals.css"; // your global styles (Tailwind or CSS)
 
 export default function App({ Component, pageProps }: AppProps) {
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <div data-theme="light">
-        <Component {...pageProps} />
-      </div>
-    </ThemeProvider>
-  );
+  return <Component {...pageProps} />;
 }

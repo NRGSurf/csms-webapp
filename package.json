@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "tokens:build": "node scripts/build-tokens.mjs",
+    "tokens:gen": "node tools/gen-tokens.mjs",
     "prebuild": "npm run tokens:build",
     "openapi:pull": "curl -fSL $BACKEND_OPENAPI_URL -o ./openapi.json",
     "openapi:gen": "openapi -i ./openapi.json -o ./lib/openapi --client fetch --useOptions --exportServices true --exportModels true",
@@ -28,6 +29,7 @@
     "zod": "^4.0.17"
   },
   "devDependencies": {
+    "@svgr/webpack": "^8.1.0",
     "@tailwindcss/postcss": "^4",
     "@types/braintree": "^3.4.0",
     "@types/node": "^20",
