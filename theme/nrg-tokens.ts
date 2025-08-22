@@ -1,4 +1,4 @@
-// AUTO-GENERATED from design-tokens.json — do not edit
+// AUTO-GENERATED from design/figma/tokens/design-tokens.json — do not edit
 const tokens = {
   "global": {
     "colors": {

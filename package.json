@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "npm run tokens:build && next dev",
+    "build": "npm run tokens:build && next build",
+    "postinstall": "npm run tokens:build",
     "start": "next start",
     "lint": "next lint",
     "tokens:build": "node scripts/build-tokens.mjs",
-    "tokens:gen": "node tools/gen-tokens.mjs",
+    "tokens:watch": "chokidar \"design/figma/tokens/*.json\" -c \"npm run tokens:build\"",
     "prebuild": "npm run tokens:build",
     "openapi:pull": "curl -fSL $BACKEND_OPENAPI_URL -o ./openapi.json",
     "openapi:gen": "openapi -i ./openapi.json -o ./lib/openapi --client fetch --useOptions --exportServices true --exportModels true",
@@ -39,6 +40,7 @@
     "dotenv-cli": "^10.0.0",
     "openapi-typescript-codegen": "^0.29.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "chokidar-cli": "^3.0.0"
   }
 }
