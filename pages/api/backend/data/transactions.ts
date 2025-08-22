@@ -16,9 +16,10 @@ export default async function handler(
     const token = process.env.CITRINE_API_TOKEN;
 
     const stationId = String(req.query.stationId || "").trim();
+    const idToken = String(req.query.idToken || "").trim(); // NEW
     const tenantId = String(req.query.tenantId || "1");
 
-    // We accept `isActive=true` from the browser, but DO NOT forward it upstream yet.
+    // Only filter locally; don't forward isActive upstream
     const wantActive =
       String(req.query.isActive || "").toLowerCase() === "true";
 
@@ -28,12 +29,18 @@ export default async function handler(
           "Backend not configured. Set CITRINE_API_BASE_URL and CITRINE_API_TOKEN in env.",
       });
     }
-    if (!stationId) {
-      return res.status(400).json({ error: "stationId is required" });
+
+    // Accept either stationId or idToken (or both)
+    if (!stationId && !idToken) {
+      return res
+        .status(400)
+        .json({ error: "stationId or idToken is required" });
     }
 
-    // Build upstream URL WITHOUT isActive (filter locally for now)
-    const params = new URLSearchParams({ stationId, tenantId });
+    const params = new URLSearchParams({ tenantId });
+    if (stationId) params.set("stationId", stationId);
+    if (idToken) params.set("idToken", idToken); // forward to backend
+
     const url = `${base}/data/transactions/transactions?${params.toString()}`;
 
     const upstream = await fetch(url, {
@@ -52,7 +59,7 @@ export default async function handler(
       });
     }
 
-    let data: any = [];
+    let data: any;
     try {
       data = JSON.parse(bodyText);
     } catch {

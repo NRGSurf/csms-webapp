@@ -42,14 +42,19 @@ export function useEvseStatus(
       // Read token from URL (client-side safe)
       const tokenFromUrl =
         typeof window !== "undefined"
-          ? new URLSearchParams(window.location.search).get("tokenID")
+          ? new URLSearchParams(window.location.search).get("idToken") ??
+            new URLSearchParams(window.location.search).get("tokenID")
           : null;
 
       // Build query string safely
-      const qs = new URLSearchParams({
-        stationId,
-        isActive: "true",
-      });
+      const qs = new URLSearchParams({ stationId });
+
+      if (tokenFromUrl) {
+        // Use the param your backend expects. Your backend snippet uses "idToken".
+        qs.set("idToken", tokenFromUrl);
+      } else {
+        qs.set("isActive", "true");
+      }
 
       // IMPORTANT: use the param name your backend expects:
       //   - If your API expects `idTokenId`, use that.
