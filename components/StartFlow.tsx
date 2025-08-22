@@ -1,325 +1,259 @@
-import React, { useMemo, useState } from "react";
-import {
-  Alert,
-  Box,
-  Card,
-  CardActions,
-  CardContent,
-  CircularProgress,
-  Divider,
-  Step,
-  StepLabel,
-  Stepper,
-  Button,
-  Typography,
-} from "@mui/material";
+// components/StartFlow.tsx
+import React, { useEffect, useMemo, useState } from "react";
+import FigmaStepper from "./figma-adapted/FigmaStepper";
+import PaymentAuthorized from "./figma-adapted/PaymentAuthorized";
 
 import Overview from "./flow/Overview";
 import BillingForm from "./flow/BillingForm";
 import PaymentPanel from "./flow/PaymentPanel";
 import Done from "./flow/Done";
-import ChargingProgress from "./flow/ChargingProgress";
+
+// Adapter that renders the Figma ChargingSession UI
+import Charging from "./flow/Charging";
+
+import TransactionGate from "./flow/TransactionGate";
 
 import { FlowStep, InvoiceForm } from "./flow/types";
 import { useStation } from "../hooks/useStation";
-import { useEvseStatus } from "../hooks/useEvseStatus"; // 2.0.1
-import { useConnectorStatus } from "../hooks/useConnectorStatus"; // 1.6
+import { useEvseStatus } from "../hooks/useEvseStatus";
 
-type Props = {
-  stationId: string;
-  /** Optional defaults encoded in your QR */
-  evseId?: number; // used if protocol is 2.0.1
-  connectorId?: number; // used if protocol is 1.6
-};
+import { Box, Flex, Text, Heading, Avatar } from "@radix-ui/themes";
+import FigmaFooter from "./figma-adapted/Footer";
 
-const isOcpp16 = (proto?: string) =>
-  !!proto && /1[_\.]?6|OCPP\s*1\.?6/i.test(String(proto));
-const isOcpp201 = (proto?: string) =>
-  !!proto && /2[_\.]?0[_\.]?1|OCPP\s*2\.?0\.?1/i.test(String(proto));
+type Props =
+  | { stationId: string; evseId: number; connectorId?: never }
+  | { stationId: string; connectorId: number; evseId?: never }
+  | { stationId: string; evseId?: number; connectorId?: number };
+
+const steps = ["Pricing", "Billing", "Payment", "Charging"];
 
 export function StartFlow({ stationId, evseId, connectorId }: Props) {
-  // Load basic station (now includes protocol)
-  const {
-    loading: stationLoading,
-    error: stationError,
-    station,
-  } = useStation(stationId);
-
-  // Decide protocol once station is loaded (fallback to URL hints if protocol missing)
-  const protocol = station?.protocol;
-  const resolved16 = useMemo(() => {
-    if (protocol) return isOcpp16(protocol);
-    if (connectorId != null) return true;
-    if (evseId != null) return false;
-    return false;
-  }, [protocol, connectorId, evseId]);
-
-  const effectiveEvseId = evseId ?? 1;
-  const effectiveConnectorId = connectorId ?? 1;
-
-  // Status hooks – both mounted, but only the right one fetches (enabled flag)
-  const evse = useEvseStatus(stationId, effectiveEvseId, {
-    enabled: !resolved16 && !!station,
-  });
-  const conn = useConnectorStatus(stationId, effectiveConnectorId, {
-    enabled: resolved16 && !!station,
-  });
-
-  const status = (resolved16 ? conn.status : evse.status) ?? "Unknown";
-  const statusLoading = resolved16 ? conn.loading : evse.loading;
-  const statusError = resolved16 ? conn.error : evse.error;
-  const tx = resolved16 ? conn.tx : evse.tx;
-  const reloadStatus = resolved16 ? conn.reload : evse.reload;
-
-  // Flow state
   const [step, setStep] = useState<FlowStep>(FlowStep.Overview);
-  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  // Billing state
   const [invoice, setInvoice] = useState<InvoiceForm>({
     fullName: "",
     email: "",
-    phone: "",
-    country: "AT",
   });
-  const [wantsFullInvoice, setWantsFullInvoice] = useState(false);
-
-  // Payment
   const [clientToken, setClientToken] = useState<string | null>(null);
+  const [paymentAuthorized, setPaymentAuthorized] = useState(false);
 
-  const go = (next: FlowStep) => setStep(next);
-  const reset = () => {
-    setStep(FlowStep.Overview);
-    setError(null);
-    setBusy(false);
-    setClientToken(null);
-    setInvoice({ fullName: "", email: "", phone: "", country: "AT" });
-    setWantsFullInvoice(false);
-  };
+  // Let the gate tell us if it’s showing charging vs receipt
+  const [tokenFlowView, setTokenFlowView] = useState<
+    "charging" | "receipt" | null
+  >(null);
 
-  const handleStart = () => go(FlowStep.Billing);
+  const { station } = useStation(stationId);
+  const { status, tx } = useEvseStatus(stationId, 4000);
 
-  const handleBillingSubmit = async (
-    values: InvoiceForm,
-    wantsFull: boolean
-  ) => {
-    setInvoice(values);
-    setWantsFullInvoice(wantsFull);
-    setError(null);
-    setBusy(true);
-    try {
-      // Initialize Braintree client token
-      const prep = await fetch("/api/braintree/token", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          stationId,
-          customer: {
-            name: values.fullName,
-            email: values.email,
-            phone: values.phone,
-          },
-          wantsFullInvoice: wantsFull,
-        }),
-      });
-      if (!prep.ok)
-        throw new Error(`Failed to initialize payment: ${prep.status}`);
-      const { clientToken: token } = await prep.json();
-      setClientToken(token);
-      go(FlowStep.Payment);
-    } catch (e: any) {
-      setError(e?.message || "Could not initialize payment");
-    } finally {
-      setBusy(false);
-    }
-  };
+  const holdAmount = useMemo(() => 60, [stationId]);
 
-  // Called by PaymentPanel with the Braintree nonce
-  const handlePay = async (nonce: string) => {
-    try {
-      setBusy(true);
-      setError(null);
+  // Derive token straight from URL (no state, no effect) to avoid oscillation
+  const tokenParam =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("idToken") ??
+        new URLSearchParams(window.location.search).get("tokenID")
+      : null;
 
-      const amount = 60; // TODO: replace with your real computed amount
-      const reserve = await fetch("/api/braintree/reserve", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ stationId, amount, paymentMethodNonce: nonce }),
-      });
-      const reserveJson = await reserve.json();
-      if (!reserve.ok || !reserveJson?.success) {
-        throw new Error(
-          reserveJson?.message || `Reservation failed (${reserve.status})`
-        );
-      }
-      const sessionId =
-        reserveJson.transactionId || reserveJson?.transaction?.id;
-      if (!sessionId) throw new Error("No transaction ID from Braintree");
+  const isTokenFlow = !!tokenParam;
 
-      const resp = await fetch("/api/csms-backend/processPayment", {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          stationId,
-          sessionId,
-          currency: "EUR",
-          amount,
-          email: invoice.email,
-          name: invoice.fullName,
-        }),
-      });
-
-      const json = await resp.json();
-      if (!resp.ok || json?.error)
-        throw new Error(json?.error || `Payment failed (${resp.status})`);
-      go(FlowStep.Done);
-    } catch (e: any) {
-      setError(e?.message || "Payment failed");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  // Loading card for station info
-  if (stationLoading) {
-    return (
-      <Card className="max-w-xl mx-auto shadow-lg">
-        <CardContent className="flex gap-3 items-center">
-          <CircularProgress size={18} />
-          <Typography>Loading station…</Typography>
-        </CardContent>
-      </Card>
-    );
+  function go(next: FlowStep) {
+    setStep(next);
+    if (typeof window !== "undefined")
+      window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const steps = ["Pricing", "Details", "Payment", "Charging"];
-  const showError = error || stationError;
+  async function fetchClientToken() {
+    const r = await fetch("/api/braintree/client-token", { cache: "no-store" });
+    const text = await r.text();
+    console.log("[braintree/token] status:", r.status, "body:", text);
+    if (!r.ok) throw new Error(`Token failed (${r.status}) ${text}`);
+    const j = JSON.parse(text);
+    if (!j?.clientToken) throw new Error("No clientToken in response");
+    setClientToken(j.clientToken);
+  }
+
+  // Fire when we enter the Payment step (keeps Braintree working)
+  useEffect(() => {
+    if (step !== FlowStep.Payment) return;
+    (async () => {
+      try {
+        console.log("[StartFlow] entering Payment, requesting client token…");
+        await fetchClientToken();
+      } catch (e) {
+        console.error("[StartFlow] client token error:", e);
+      }
+    })();
+  }, [step]);
+
+  function handleBillingSubmit(values: InvoiceForm) {
+    setInvoice(values);
+    go(FlowStep.Payment);
+  }
+
+  // Reserve + (optional) processPayment
+  const [tokenID, setTokenID] = useState<string | null>(null);
+  async function handlePay(nonce: string) {
+    setBusy(true);
+    try {
+      const amount = 60; // TODO replace with computed amount
+      const resp = await fetch("/api/braintree/reserve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stationId, amount, paymentMethodNonce: nonce }),
+      });
+      const j = await resp.json();
+      if (!resp.ok || !j?.success || !j?.transactionId) {
+        throw new Error(j?.message || `Reserve failed (${resp.status})`);
+      }
+      if (j?.transactionId) setTokenID(String(j.transactionId));
+
+      // Optional capture (same as earlier version)
+      try {
+        const capture = await fetch("/api/csms-backend/processPayment", {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            stationId,
+            sessionId: j.transactionId,
+            currency: "EUR",
+            amount,
+            email: invoice.email,
+            name: invoice.fullName,
+          }),
+        });
+        const capJson = await capture.json().catch(() => ({}));
+        if (!capture.ok || (capJson as any)?.error) {
+          console.warn("processPayment failed:", capJson || capture.status);
+        }
+      } catch (e) {
+        console.warn("processPayment error:", e);
+      }
+
+      setPaymentAuthorized(true);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Local “already charging” view (RFID, etc) for non-token flow
+  const showCharging =
+    status === "Occupied" &&
+    !!tx &&
+    (typeof tx?.kwh === "number" || typeof tx?.seconds === "number");
+
+  // Stepper index:
+  // - token flow: charging → 3, receipt → steps.length (mark Charging completed)
+  // - non-token: charging → 3, done → steps.length, else map to current step
+  const currentIndex = useMemo(() => {
+    if (isTokenFlow) return tokenFlowView === "receipt" ? steps.length : 3;
+    if (showCharging) return 3;
+    return step === FlowStep.Done ? steps.length : step;
+  }, [isTokenFlow, tokenFlowView, showCharging, step]);
 
   return (
-    <Card className="max-w-3xl mx-auto shadow-lg">
-      {/* Header + progress (at the top, like the mock) */}
-      <Box sx={{ p: 3, pb: 0 }}>
-        <Typography variant="h4" fontWeight={700} textAlign="center">
+    <Box>
+      {/* Header */}
+      <Box style={{ textAlign: "center", marginBottom: 16 }}>
+        <Flex align="center" justify="center" mb="2">
+          <Avatar size="6" radius="full" fallback="N" />
+        </Flex>
+        <Heading size="5" style={{ color: "var(--gray-12)" }}>
           NRG Charge Portal
-        </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          textAlign="center"
-          sx={{ mt: 0.5 }}
-        >
+        </Heading>
+        <Text size="2" color="gray">
           AFIR Compliant • Secure • No Registration Required
-        </Typography>
-
-        <Stepper
-          activeStep={step}
-          alternativeLabel
-          sx={{
-            mt: 2,
-            "& .MuiStepIcon-root": {
-              width: 34,
-              height: 34,
-            },
-            "& .MuiStepConnector-line": {
-              height: 4,
-              border: 0,
-              background: (theme) => theme.palette.divider,
-            },
-          }}
-        >
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+        </Text>
       </Box>
 
-      <CardContent sx={{ pt: 2 }}>
-        {showError && (
-          <Alert severity="error" className="mb-4">
-            {showError}
-          </Alert>
-        )}
+      {/* Stepper */}
+      <Box mb="4">
+        <FigmaStepper labels={steps} currentIndex={currentIndex} />
+      </Box>
 
-        {/* OVERVIEW / PRICING */}
-        {step === FlowStep.Overview && (
-          <Box>
-            {/* If occupied: show charging progress */}
-            {status === "Occupied" ? (
-              <>
-                <ChargingProgress
+      {isTokenFlow ? (
+        // Token-based: gate decides Charging vs Receipt, and reports back for the stepper
+        <TransactionGate
+          key={`gate:${stationId}:${tokenParam}`} // stable per token, no oscillation
+          stationId={stationId}
+          onViewChange={setTokenFlowView}
+        />
+      ) : (
+        <>
+          {/* OVERVIEW / PRICING or CHARGING (local) */}
+          {step === FlowStep.Overview &&
+            (showCharging ? (
+              typeof connectorId === "number" ? (
+                <Charging
                   stationId={stationId}
-                  {...(resolved16
-                    ? { connectorId: effectiveConnectorId }
-                    : { evseId: effectiveEvseId })}
-                  transactionId={tx?.id as any}
-                  kwh={tx?.kwh}
-                  seconds={tx?.seconds}
-                  startedAt={tx?.startedAt}
+                  connectorId={connectorId} // required in this union branch
+                  transactionId={tx?.id ? String(tx.id) : ""}
+                  kwh={typeof tx?.kwh === "number" ? tx.kwh : 0}
+                  seconds={typeof tx?.seconds === "number" ? tx.seconds : 0}
+                  startedAt={tx?.startedAt ? String(tx.startedAt) : undefined}
                 />
-                <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
-                  <Button onClick={reloadStatus} disabled={statusLoading}>
-                    {statusLoading ? "Refreshing…" : "Refresh"}
-                  </Button>
-                </Box>
-              </>
+              ) : (
+                <Charging
+                  stationId={stationId}
+                  evseId={typeof evseId === "number" ? evseId : 1} // required in this union branch
+                  transactionId={tx?.id ? String(tx.id) : ""}
+                  kwh={typeof tx?.kwh === "number" ? tx.kwh : 0}
+                  seconds={typeof tx?.seconds === "number" ? tx.seconds : 0}
+                  startedAt={tx?.startedAt ? String(tx.startedAt) : undefined}
+                />
+              )
             ) : (
               <Overview
                 stationId={stationId}
                 station={station}
                 status={status}
-                onAcceptPricing={() => setStep(FlowStep.Billing)}
+                onAcceptPricing={() => go(FlowStep.Billing)}
               />
-            )}
-          </Box>
-        )}
+            ))}
 
-        {/* BILLING */}
-        {step === FlowStep.Billing && (
-          <BillingForm
-            initial={invoice}
-            onSubmit={(vals, wantsFull) => handleBillingSubmit(vals, wantsFull)}
-            busy={busy}
-          />
-        )}
+          {/* BILLING */}
+          {step === FlowStep.Billing && (
+            <BillingForm
+              initial={invoice}
+              onSubmit={handleBillingSubmit}
+              busy={busy}
+            />
+          )}
 
-        {/* PAYMENT */}
-        {step === FlowStep.Payment && (
-          <PaymentPanel
-            clientToken={clientToken}
-            busy={busy}
-            onPay={handlePay}
-          />
-        )}
+          {/* PAYMENT */}
+          {step === FlowStep.Payment &&
+            (paymentAuthorized ? (
+              <PaymentAuthorized
+                amount={holdAmount}
+                email={invoice.email}
+                onContinue={() => {
+                  if (typeof window === "undefined") return;
+                  const url = new URL(window.location.href);
+                  if (tokenID) url.searchParams.set("tokenID", tokenID);
+                  window.location.assign(url.pathname + url.search);
+                }}
+              />
+            ) : (
+              <PaymentPanel
+                clientToken={clientToken}
+                busy={busy}
+                onPay={handlePay}
+              />
+            ))}
 
-        {/* DONE */}
-        {step === FlowStep.Done && <Done />}
-      </CardContent>
+          {/* DONE (fallback) */}
+          {step === FlowStep.Done && <Done />}
+        </>
+      )}
 
-      {/* Bottom actions (keep minimal) */}
-      <Divider />
-      <CardActions>
-        <Box className="w-full flex justify-between items-center">
-          <Box className="flex gap-1">
-            {step > FlowStep.Overview && step < FlowStep.Done && (
-              <Button
-                onClick={() => setStep((step - 1) as FlowStep)}
-                disabled={busy}
-              >
-                Back
-              </Button>
-            )}
-            {step !== FlowStep.Done && (
-              <Button onClick={reset} disabled={busy}>
-                Cancel
-              </Button>
-            )}
-          </Box>
-          <Box />
-        </Box>
-      </CardActions>
-    </Card>
+      {/* Footer */}
+      <FigmaFooter />
+    </Box>
   );
 }
+
+export default StartFlow;

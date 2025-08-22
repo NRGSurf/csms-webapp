@@ -39,10 +39,35 @@ export function useEvseStatus(
     setError(null);
 
     try {
-      const url = `/api/backend/data/transactions?stationId=${encodeURIComponent(
-        stationId
-      )}&isActive=true&transactionId=bla`;
-      const r = await fetch(url, { signal: ac.signal });
+      // Read token from URL (client-side safe)
+      const tokenFromUrl =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("idToken") ??
+            new URLSearchParams(window.location.search).get("tokenID")
+          : null;
+
+      // Build query string safely
+      const qs = new URLSearchParams({ stationId });
+
+      if (tokenFromUrl) {
+        // Use the param your backend expects. Your backend snippet uses "idToken".
+        qs.set("idToken", tokenFromUrl);
+      } else {
+        qs.set("isActive", "true");
+      }
+
+      // IMPORTANT: use the param name your backend expects:
+      //   - If your API expects `idTokenId`, use that.
+      //   - If it expects `tokenID`, set that instead.
+      if (tokenFromUrl) {
+        qs.set("idTokenId", tokenFromUrl); // or: qs.set("tokenID", tokenFromUrl)
+      }
+
+      const r = await fetch(`/api/backend/data/transactions?${qs.toString()}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
       const text = await r.text();
       if (!r.ok) {
         throw new Error(`Upstream ${r.status}: ${text}`);

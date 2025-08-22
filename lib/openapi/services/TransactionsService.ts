@@ -12,6 +12,7 @@ import type { processPaymentSchema } from '../models/processPaymentSchema';
 import type { SystemConfigSchema } from '../models/SystemConfigSchema';
 import type { TariffResponseSchema } from '../models/TariffResponseSchema';
 import type { TariffSchema } from '../models/TariffSchema';
+import type { TransactionEventResponseSchema } from '../models/TransactionEventResponseSchema';
 import type { TransactionEventsResponseSchema } from '../models/TransactionEventsResponseSchema';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -72,7 +73,7 @@ export class TransactionsService {
         });
     }
     /**
-     * @returns TransactionEventsResponseSchema Default Response
+     * @returns TransactionEventResponseSchema Default Response
      * @throws ApiError
      */
     public static getDataTransactionsTransaction({
@@ -83,7 +84,7 @@ export class TransactionsService {
         stationId: string,
         transactionId: string,
         tenantId?: number,
-    }): CancelablePromise<TransactionEventsResponseSchema> {
+    }): CancelablePromise<TransactionEventResponseSchema> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/data/transactions/transaction',
@@ -100,11 +101,13 @@ export class TransactionsService {
      */
     public static getDataTransactionsTransactions({
         stationId,
-        transactionId,
+        isActive,
+        idToken,
         tenantId = 1,
     }: {
-        stationId: string,
-        transactionId: string,
+        stationId?: string,
+        isActive?: boolean,
+        idToken?: string,
         tenantId?: number,
     }): CancelablePromise<TransactionEventsResponseSchema> {
         return __request(OpenAPI, {
@@ -112,7 +115,8 @@ export class TransactionsService {
             url: '/data/transactions/transactions',
             query: {
                 'stationId': stationId,
-                'transactionId': transactionId,
+                'isActive': isActive,
+                'idToken': idToken,
                 'tenantId': tenantId,
             },
         });

@@ -148,6 +148,8 @@ export type { TariffResponseSchema } from './models/TariffResponseSchema';
 export type { TariffSchema } from './models/TariffSchema';
 export type { TenantQuerySchema } from './models/TenantQuerySchema';
 export type { TransactionEventQuerySchema } from './models/TransactionEventQuerySchema';
+export type { TransactionEventResponseSchema } from './models/TransactionEventResponseSchema';
+export type { TransactionEventsQuerySchema } from './models/TransactionEventsQuerySchema';
 export type { TransactionEventsResponseSchema } from './models/TransactionEventsResponseSchema';
 export type { TriggerMessageRequest } from './models/TriggerMessageRequest';
 export { TriggerMessageRequestRequestedMessage } from './models/TriggerMessageRequestRequestedMessage';

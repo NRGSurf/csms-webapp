@@ -1,0 +1,87 @@
+:root {
+  /* Map to your token variables. Adjust names if your tokens.css uses different keys */
+  --bg: var(--nrg-light-colors-background-primary, #ffffff);
+  --bg-muted: var(--nrg-light-colors-background-secondary, #f9fafb);
+  --text: var(--nrg-light-colors-text-primary, #030213);
+  --text-muted: var(--nrg-light-colors-text-secondary, #6b7280);
+
+  --brand: var(--nrg-global-colors-brand-primary, #030213);
+  --brand-contrast: var(--nrg-global-colors-semantic-background, #ffffff);
+
+  --radius-lg: var(--nrg-global-borderRadius-lg, 10px);
+  --radius-xl: var(--nrg-global-borderRadius-xl, 16px);
+
+  --space-sm: var(--nrg-global-spacing-sm, 8px);
+  --space-md: var(--nrg-global-spacing-md, 16px);
+  --space-lg: var(--nrg-global-spacing-lg, 24px);
+  --space-xl: var(--nrg-global-spacing-xl, 32px);
+
+  --shadow-md: var(--nrg-global-shadows-md, 0 4px 6px rgba(0, 0, 0, 0.08));
+}
+
+/* Card shell like in the Figma page */
+.nrg-card {
+  background: var(--bg);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+/* Primary CTA */
+.nrg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: transform 0.04s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.nrg-btn-primary {
+  background: var(--brand);
+  color: var(--brand-contrast);
+}
+
+.nrg-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.nrg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: var(--bg-muted);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.nrg-h1 {
+  font-size: var(--nrg-global-typography-fontSize-2xl, 24px);
+  line-height: var(--nrg-global-typography-lineHeight-tight, 1.25);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.nrg-subtle {
+  color: var(--text-muted);
+}
+
+/* Simple skeleton */
+.nrg-skeleton {
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eee, #f5f5f5, #eee);
+  background-size: 200% 100%;
+  animation: nrg-skel 1.2s infinite linear;
+}
+@keyframes nrg-skel {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
