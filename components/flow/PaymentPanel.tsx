@@ -1,6 +1,9 @@
 // components/flow/PaymentPanel.tsx
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../../design/figma/components/ui/card";
+import { Button } from "../../design/figma/components/ui/button";
+import { Flex, Text } from "@radix-ui/themes";
 import { Lock, ShieldCheck } from "lucide-react";
 
 type Props = {
@@ -18,7 +21,6 @@ export default function PaymentPanel({ clientToken, busy, onPay }: Props) {
   useEffect(() => {
     let active = true;
     let currentInstance: any = null;
-
     async function init() {
       if (!clientToken || !containerRef.current) return;
       setError(null);
@@ -43,14 +45,11 @@ export default function PaymentPanel({ clientToken, busy, onPay }: Props) {
         setError(err?.message || "Failed to initialize payment form");
       }
     }
-
     init();
     return () => {
       active = false;
       (async () => {
-        try {
-          if (currentInstance) await currentInstance.teardown();
-        } catch {}
+        try { if (currentInstance) await currentInstance.teardown(); } catch {}
       })();
       setInstance(null);
       setReady(false);
@@ -71,74 +70,51 @@ export default function PaymentPanel({ clientToken, busy, onPay }: Props) {
 
   if (!clientToken) {
     return (
-      <div className="flex items-center gap-2 text-gray-600">
-        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-            fill="none"
-          />
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-          />
+      <Flex align="center" gap="2" style={{ color: "var(--gray-11)" }}>
+        <svg style={{ animation: "spin 1s linear infinite", height: 16, width: 16 }} viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" opacity=".25" />
+          <path fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" opacity=".75" />
         </svg>
-        <span className="text-sm">Preparing payment…</span>
-      </div>
+        <Text size="1">Preparing payment…</Text>
+      </Flex>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-xl border-0 p-6">
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <Lock className="w-5 h-5 text-blue-600" />
-            Secure Payment
-          </h2>
-          <p className="text-sm text-gray-500">
-            Your card details are handled securely by Braintree.
-          </p>
-        </div>
+    <div>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <Flex align="center" gap="2">
+              <Lock size={20} color="var(--blue-9)" /> Secure Payment
+            </Flex>
+          </CardTitle>
+          <Text size="2" color="gray">Your card details are handled securely by Braintree.</Text>
+        </CardHeader>
+        <CardContent>
+          <div ref={containerRef} />
+          {error && (
+            <div style={{ marginTop: 12, borderRadius: 8, border: "1px solid var(--red-6)", background: "var(--red-3)", color: "var(--red-11)", padding: 12, fontSize: 14 }}>
+              {error}
+            </div>
+          )}
+          <Flex justify="end" style={{ marginTop: 16 }}>
+            <Button onClick={handlePay} disabled={!ready || !!busy}>
+              {busy ? "Processing…" : "Pay & Start Charging"}
+            </Button>
+          </Flex>
+        </CardContent>
+      </Card>
 
-        <div ref={containerRef} />
-
-        {error && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 text-red-700 p-3 text-sm">
-            {error}
-          </div>
-        )}
-
-        <div className="mt-6 flex justify-end">
-          <button
-            type="button"
-            onClick={handlePay}
-            disabled={!ready || !!busy}
-            className={`rounded-xl px-6 h-12 min-w-[220px] font-medium transition ${
-              !ready || busy
-                ? "bg-gray-400 text-white cursor-not-allowed"
-                : "bg-gray-900 hover:bg-gray-900/90 text-white"
-            }`}
-          >
-            {busy ? "Processing…" : "Pay & Start Charging"}
-          </button>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
-        <span className="inline-flex items-center gap-1">
-          <ShieldCheck className="w-4 h-4 text-green-600" /> EU AFIR Compliant
-        </span>
-        <span className="text-gray-400">•</span>
-        <span className="inline-flex items-center gap-1">
-          <Lock className="w-4 h-4 text-blue-600" /> Secure Payment
-        </span>
-      </div>
+      <Flex align="center" justify="center" gap="3" mt="3" style={{ color: "var(--gray-11)", fontSize: 14 }}>
+        <Flex align="center" gap="1">
+          <ShieldCheck size={16} color="var(--green-9)" /> EU AFIR Compliant
+        </Flex>
+        <Text color="gray">•</Text>
+        <Flex align="center" gap="1">
+          <Lock size={16} color="var(--blue-9)" /> Secure Payment
+        </Flex>
+      </Flex>
     </div>
   );
 }

@@ -1,10 +1,7 @@
 import * as React from "react";
-import { Card as RTCard, Box, Heading } from "@radix-ui/themes";
+import { Card as RTCard, Box, Heading, Text } from "@radix-ui/themes";
 
-type BoxProps = React.ComponentProps<typeof Box>;
-
-export function Card({ children, ...props }: BoxProps) {
-  // Using Radix Themes Card with default padding removed; consumers can add Box padding.
+export function Card({ children, ...props }: React.ComponentProps<typeof Box>) {
   return (
     <RTCard>
       <Box {...props}>{children}</Box>
@@ -12,22 +9,14 @@ export function Card({ children, ...props }: BoxProps) {
   );
 }
 
-export function CardHeader({ children, ...props }: BoxProps) {
-  return (
-    <Box mb="3" {...props}>
-      {children}
-    </Box>
-  );
+export function CardHeader({ children, ...props }: React.ComponentProps<typeof Box>) {
+  return <Box mb="3" {...props}>{children}</Box>;
 }
 
 export function CardTitle({ children, ...props }: React.ComponentProps<typeof Heading>) {
-  return (
-    <Heading size="3" {...props}>
-      {children}
-    </Heading>
-  );
+  return <Heading size="3" {...props}>{children}</Heading>;
 }
 
-export function CardContent({ children, ...props }: BoxProps) {
+export function CardContent({ children, ...props }: React.ComponentProps<typeof Box>) {
   return <Box {...props}>{children}</Box>;
 }

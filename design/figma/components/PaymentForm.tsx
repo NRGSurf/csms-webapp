@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { CreditCard, Smartphone, Shield, CheckCircle2, Loader2 } from 'lucide-react';
-import type { SessionData } from '../types';
+import { SessionData } from '../App';
 
 interface PaymentFormProps {
   sessionData: SessionData;

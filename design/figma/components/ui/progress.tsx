@@ -1,9 +1,7 @@
 import * as React from "react";
 import * as ProgressPrimitive from "@radix-ui/react-progress";
 
-type Props = React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root> & {
-  value?: number;
-};
+type Props = React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root> & { value?: number };
 
 export const Progress = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,

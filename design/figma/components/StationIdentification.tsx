@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { MapPin, Zap, QrCode, CheckCircle2 } from 'lucide-react';
-import type { SessionData } from '../types';
+import { SessionData } from '../App';
 
 interface StationIdentificationProps {
   sessionData: SessionData;

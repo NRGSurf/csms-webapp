@@ -1,7 +1,5 @@
 import { ReactNode } from "react";
 import { Theme, Container } from "@radix-ui/themes";
-// IMPORTANT: ensure global styles are imported in pages/_app.tsx :
-// import "@radix-ui/themes/styles.css";
 
 type Props = { children: ReactNode };
 
