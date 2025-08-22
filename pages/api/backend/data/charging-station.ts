@@ -20,15 +20,28 @@ export default async function handler(
     if (!stationId) {
       return res.status(400).json({ error: "stationId is required" });
     }
+    // Read token from URL (client-side safe)
+    const tokenFromUrl =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("tokenID")
+        : null;
 
-    const url = `${base}/data/transactions/chargingStation?stationId=${encodeURIComponent(
-      stationId
-    )}&tenantId=${encodeURIComponent(tenantId)}`;
-    const r = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+    // Build query string safely
+    const qs = new URLSearchParams({
+      stationId,
+      isActive: "true",
+    });
+
+    // IMPORTANT: use the param name your backend expects:
+    //   - If your API expects `idTokenId`, use that.
+    //   - If it expects `tokenID`, set that instead.
+    if (tokenFromUrl) {
+      qs.set("idTokenId", tokenFromUrl); // or: qs.set("tokenID", tokenFromUrl)
+    }
+
+    const r = await fetch(`/api/backend/data/transactions?${qs.toString()}`, {
+      method: "GET",
+      credentials: "include",
     });
 
     if (!r.ok) {

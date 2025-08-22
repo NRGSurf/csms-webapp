@@ -35,6 +35,9 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
   const [clientToken, setClientToken] = useState<string | null>(null);
   const [paymentAuthorized, setPaymentAuthorized] = useState(false);
 
+  // NEW: keep the Braintree transaction.id we get back from /api/braintree/reserve
+  const [tokenID, setTokenID] = useState<string | null>(null);
+
   const { station } = useStation(stationId);
   const { status, tx } = useEvseStatus(stationId, { enabled: true });
 
@@ -64,6 +67,7 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
     go(FlowStep.Payment);
   }
 
+  // CHANGED: capture transactionId from your reserve endpoint
   async function handlePay(nonce: string) {
     setBusy(true);
     try {
@@ -76,7 +80,13 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
           paymentMethodNonce: nonce,
         }),
       });
-      if (!resp.ok) throw new Error(await resp.text());
+
+      const j = await resp.json().catch(() => null);
+      if (!resp.ok) {
+        throw new Error(j?.message || `Reserve failed (${resp.status})`);
+      }
+
+      if (j?.transactionId) setTokenID(String(j.transactionId));
       setPaymentAuthorized(true);
     } catch (e) {
       console.error(e);
@@ -146,7 +156,13 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
           <PaymentAuthorized
             amount={holdAmount}
             email={invoice.email}
-            onContinue={() => go(FlowStep.Overview)}
+            // CHANGED: Reload page with ?tokenID=<transaction.id>
+            onContinue={() => {
+              if (typeof window === "undefined") return;
+              const url = new URL(window.location.href);
+              if (tokenID) url.searchParams.set("tokenID", tokenID);
+              window.location.assign(url.pathname + url.search); // full reload
+            }}
           />
         ) : (
           <PaymentPanel

@@ -18,13 +18,6 @@ export default async function handler(
     const stationId = String(req.query.stationId || "").trim();
     const tenantId = String(req.query.tenantId || "1");
 
-    // Frontend may pass it, but if not, DEFAULT to "bla" as requested
-    const transactionId =
-      typeof req.query.transactionId === "string" &&
-      req.query.transactionId.trim()
-        ? req.query.transactionId.trim()
-        : "bla";
-
     // We accept `isActive=true` from the browser, but DO NOT forward it upstream yet.
     const wantActive =
       String(req.query.isActive || "").toLowerCase() === "true";
@@ -40,7 +33,7 @@ export default async function handler(
     }
 
     // Build upstream URL WITHOUT isActive (filter locally for now)
-    const params = new URLSearchParams({ stationId, tenantId, transactionId });
+    const params = new URLSearchParams({ stationId, tenantId });
     const url = `${base}/data/transactions/transactions?${params.toString()}`;
 
     const upstream = await fetch(url, {
