@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { CheckCircle2, Receipt as ReceiptIcon, Mail, Download, RefreshCw, MapPin, Clock, Zap, Euro } from 'lucide-react';
-import { ChargingData, SessionData } from '../App';
+import type { ChargingData, SessionData } from '../types';
 
 interface ReceiptProps {
   sessionData: SessionData;

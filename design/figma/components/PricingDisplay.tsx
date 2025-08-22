@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Euro, Zap, Clock, AlertCircle, Info, MapPin, CheckCircle2, QrCode } from 'lucide-react';
-import { SessionData } from '../App';
+import type { SessionData } from '../types';
 
 interface PricingDisplayProps {
   sessionData: SessionData;

@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Zap, Clock, Euro, Activity, StopCircle, Pause, AlertTriangle } from 'lucide-react';
-import { ChargingData, SessionData } from '../App';
+import type { ChargingData, SessionData } from '../types';
 
 interface ChargingSessionProps {
   chargingData: ChargingData;

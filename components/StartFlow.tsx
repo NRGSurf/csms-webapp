@@ -7,12 +7,10 @@ import {
   CardContent,
   CircularProgress,
   Divider,
-  Step,
-  StepLabel,
-  Stepper,
   Button,
   Typography,
 } from "@mui/material";
+import FigmaStepper from "./figma-adapted/FigmaStepper";
 
 import Overview from "./flow/Overview";
 import BillingForm from "./flow/BillingForm";
@@ -212,28 +210,7 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
           AFIR Compliant • Secure • No Registration Required
         </Typography>
 
-        <Stepper
-          activeStep={step}
-          alternativeLabel
-          sx={{
-            mt: 2,
-            "& .MuiStepIcon-root": {
-              width: 34,
-              height: 34,
-            },
-            "& .MuiStepConnector-line": {
-              height: 4,
-              border: 0,
-              background: (theme) => theme.palette.divider,
-            },
-          }}
-        >
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+        <FigmaStepper labels={steps} currentIndex={step} className="mt-2" />
       </Box>
 
       <CardContent sx={{ pt: 2 }}>
