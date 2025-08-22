@@ -187,15 +187,25 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
           {/* OVERVIEW / PRICING or CHARGING (local) */}
           {step === FlowStep.Overview &&
             (showCharging ? (
-              <Charging
-                stationId={stationId}
-                {...(typeof evseId === "number" ? { evseId } : {})}
-                {...(typeof connectorId === "number" ? { connectorId } : {})}
-                transactionId={tx?.id ? String(tx.id) : ""}
-                kwh={typeof tx?.kwh === "number" ? tx.kwh : 0}
-                seconds={typeof tx?.seconds === "number" ? tx.seconds : 0}
-                startedAt={tx?.startedAt as any}
-              />
+              typeof connectorId === "number" ? (
+                <Charging
+                  stationId={stationId}
+                  connectorId={connectorId} // required in this union branch
+                  transactionId={tx?.id ? String(tx.id) : ""}
+                  kwh={typeof tx?.kwh === "number" ? tx.kwh : 0}
+                  seconds={typeof tx?.seconds === "number" ? tx.seconds : 0}
+                  startedAt={tx?.startedAt ? String(tx.startedAt) : undefined}
+                />
+              ) : (
+                <Charging
+                  stationId={stationId}
+                  evseId={typeof evseId === "number" ? evseId : 1} // required in this union branch
+                  transactionId={tx?.id ? String(tx.id) : ""}
+                  kwh={typeof tx?.kwh === "number" ? tx.kwh : 0}
+                  seconds={typeof tx?.seconds === "number" ? tx.seconds : 0}
+                  startedAt={tx?.startedAt ? String(tx.startedAt) : undefined}
+                />
+              )
             ) : (
               <Overview
                 stationId={stationId}
