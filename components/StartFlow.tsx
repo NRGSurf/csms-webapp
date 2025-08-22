@@ -2,21 +2,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import FigmaStepper from "./figma-adapted/FigmaStepper";
 import PaymentAuthorized from "./figma-adapted/PaymentAuthorized";
-import AppIcon from "../design/figma/imports/AppIcon2";
 
 import Overview from "./flow/Overview";
 import BillingForm from "./flow/BillingForm";
 import PaymentPanel from "./flow/PaymentPanel";
 import Done from "./flow/Done";
 
-// NOTE: This is the adapter that renders the Figma ChargingSession
+// NOTE: adapter that renders the Figma ChargingSession
 import ChargingProgress from "./flow/Charging";
 
 import { FlowStep, InvoiceForm } from "./flow/types";
 import { useStation } from "../hooks/useStation";
 import { useEvseStatus } from "../hooks/useEvseStatus";
 
-import { Box, Flex, Text, Heading } from "@radix-ui/themes";
+import { Box, Flex, Text, Heading, Avatar } from "@radix-ui/themes";
 import FigmaFooter from "./figma-adapted/Footer";
 
 type Props =
@@ -27,7 +26,6 @@ type Props =
 const steps = ["Pricing", "Billing", "Payment", "Receipt"];
 
 export function StartFlow({ stationId, evseId, connectorId }: Props) {
-  // flow state
   const [step, setStep] = useState<FlowStep>(FlowStep.Overview);
   const [busy, setBusy] = useState(false);
   const [invoice, setInvoice] = useState<InvoiceForm>({
@@ -37,27 +35,14 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
   const [clientToken, setClientToken] = useState<string | null>(null);
   const [paymentAuthorized, setPaymentAuthorized] = useState(false);
 
-  // data hooks
-  const {
-    loading: stationLoading,
-    error: stationError,
-    station,
-  } = useStation(stationId);
-  const {
-    loading: statusLoading,
-    error: statusError,
-    status,
-    tx,
-  } = useEvseStatus(stationId, { enabled: true });
+  const { station } = useStation(stationId);
+  const { status, tx } = useEvseStatus(stationId, { enabled: true });
 
-  const holdAmount = useMemo(() => {
-    // Fallback: €60 pre-auth; if you expose station.tariff.preAuthAmount later, use it here.
-    return 60;
-  }, [stationId]);
+  const holdAmount = useMemo(() => 60, [stationId]);
 
   function go(next: FlowStep) {
     setStep(next);
-    if (typeof window !== "undefined" && window.scrollTo)
+    if (typeof window !== "undefined")
       window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -68,14 +53,13 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
     setClientToken(j.clientToken);
   }
 
-  // Get Braintree token when we first arrive on Payment step
   useEffect(() => {
     if (step === FlowStep.Payment && !clientToken) {
-      fetchClientToken().catch((e) => console.error("Client token error:", e));
+      fetchClientToken().catch(console.error);
     }
   }, [step, clientToken]);
 
-  function handleBillingSubmit(values: InvoiceForm, wantsFull: boolean) {
+  function handleBillingSubmit(values: InvoiceForm) {
     setInvoice(values);
     go(FlowStep.Payment);
   }
@@ -92,15 +76,10 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
           paymentMethodNonce: nonce,
         }),
       });
-      if (!resp.ok) {
-        const text = await resp.text();
-        throw new Error(text || `Payment failed (${resp.status})`);
-      }
-      // Show "Payment Authorized" screen in-place (Payment step)
+      if (!resp.ok) throw new Error(await resp.text());
       setPaymentAuthorized(true);
     } catch (e) {
       console.error(e);
-      // Optional: surface an error UI here if desired.
     } finally {
       setBusy(false);
     }
@@ -113,12 +92,10 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
 
   return (
     <Box>
-      {/* Header */}
+      {/* Header (Radix only, no Tailwind) */}
       <Box style={{ textAlign: "center", marginBottom: 16 }}>
         <Flex align="center" justify="center" mb="2">
-          <Box style={{ width: 64, height: 64 }}>
-            <AppIcon />
-          </Box>
+          <Avatar size="6" radius="full" fallback="N" />
         </Flex>
         <Heading size="5" style={{ color: "var(--gray-12)" }}>
           NRG Charge Portal

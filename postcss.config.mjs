@@ -1,5 +1,5 @@
+// postcss.config.mjs
 const config = {
-  plugins: [], // no Tailwind plugin
+  plugins: ["@tailwindcss/postcss"],
 };
-
 export default config;
