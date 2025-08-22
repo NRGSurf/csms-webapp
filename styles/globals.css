@@ -1,5 +1,10 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
+@source "../design/figma/components/**/*.{ts,tsx}";
+@source "../components/figma-adapted/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+@source "../pages/**/*.{ts,tsx}";
+@source "../app/**/*.{ts,tsx}";
 
 :root {
   --background: #ffffff;
