@@ -43,7 +43,7 @@ export function StartFlow({ stationId, evseId, connectorId }: Props) {
   >(null);
 
   const { station } = useStation(stationId);
-  const { status, tx } = useEvseStatus(stationId, { enabled: true });
+  const { status, tx } = useEvseStatus(stationId, 4000);
 
   const holdAmount = useMemo(() => 60, [stationId]);
 
