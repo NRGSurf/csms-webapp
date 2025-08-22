@@ -1,7 +1,12 @@
 // components/flow/PaymentPanel.tsx
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../../design/figma/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../design/figma/components/ui/card";
 import { Button } from "../../design/figma/components/ui/button";
 import { Flex, Text } from "@radix-ui/themes";
 import { Lock, ShieldCheck } from "lucide-react";
@@ -49,7 +54,9 @@ export default function PaymentPanel({ clientToken, busy, onPay }: Props) {
     return () => {
       active = false;
       (async () => {
-        try { if (currentInstance) await currentInstance.teardown(); } catch {}
+        try {
+          if (currentInstance) await currentInstance.teardown();
+        } catch {}
       })();
       setInstance(null);
       setReady(false);
@@ -71,9 +78,28 @@ export default function PaymentPanel({ clientToken, busy, onPay }: Props) {
   if (!clientToken) {
     return (
       <Flex align="center" gap="2" style={{ color: "var(--gray-11)" }}>
-        <svg style={{ animation: "spin 1s linear infinite", height: 16, width: 16 }} viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" opacity=".25" />
-          <path fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" opacity=".75" />
+        <svg
+          style={{
+            animation: "spin 1s linear infinite",
+            height: 16,
+            width: 16,
+          }}
+          viewBox="0 0 24 24"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+            fill="none"
+            opacity=".25"
+          />
+          <path
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            opacity=".75"
+          />
         </svg>
         <Text size="1">Preparing payment…</Text>
       </Flex>
@@ -89,24 +115,46 @@ export default function PaymentPanel({ clientToken, busy, onPay }: Props) {
               <Lock size={20} color="var(--blue-9)" /> Secure Payment
             </Flex>
           </CardTitle>
-          <Text size="2" color="gray">Your card details are handled securely by Braintree.</Text>
+          <Text size="2" color="gray">
+            Your card details are handled securely by Braintree.
+          </Text>
         </CardHeader>
         <CardContent>
           <div ref={containerRef} />
           {error && (
-            <div style={{ marginTop: 12, borderRadius: 8, border: "1px solid var(--red-6)", background: "var(--red-3)", color: "var(--red-11)", padding: 12, fontSize: 14 }}>
+            <div
+              style={{
+                marginTop: 12,
+                borderRadius: 8,
+                border: "1px solid var(--red-6)",
+                background: "var(--red-3)",
+                color: "var(--red-11)",
+                padding: 12,
+                fontSize: 14,
+              }}
+            >
               {error}
             </div>
           )}
           <Flex justify="end" style={{ marginTop: 16 }}>
-            <Button onClick={handlePay} disabled={!ready || !!busy}>
+            <Button
+              onClick={handlePay}
+              className="rounded-2xl bg-gray-900 px-6 py-3 text-white hover:bg-gray-800"
+              disabled={!ready || !!busy}
+            >
               {busy ? "Processing…" : "Pay & Start Charging"}
             </Button>
           </Flex>
         </CardContent>
       </Card>
 
-      <Flex align="center" justify="center" gap="3" mt="3" style={{ color: "var(--gray-11)", fontSize: 14 }}>
+      <Flex
+        align="center"
+        justify="center"
+        gap="3"
+        mt="3"
+        style={{ color: "var(--gray-11)", fontSize: 14 }}
+      >
         <Flex align="center" gap="1">
           <ShieldCheck size={16} color="var(--green-9)" /> EU AFIR Compliant
         </Flex>

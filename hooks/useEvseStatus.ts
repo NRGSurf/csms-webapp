@@ -41,7 +41,7 @@ export function useEvseStatus(
     try {
       const url = `/api/backend/data/transactions?stationId=${encodeURIComponent(
         stationId
-      )}&isActive=true&transactionId=bla`;
+      )}&isActive=true`;
       const r = await fetch(url, { signal: ac.signal });
       const text = await r.text();
       if (!r.ok) {
